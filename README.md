@@ -1,5 +1,4 @@
 Tarena-java
 ===========
 
-Collect My Study
-11111
+Thanks the github, it can collet my code of java-studying .
