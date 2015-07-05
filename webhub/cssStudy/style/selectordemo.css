@@ -1,0 +1,24 @@
+/*
+    类选择器
+*/
+.center{
+    background-color: beige;
+    font-size: 20px;
+}
+/*
+    ID选择器
+*/
+#right {
+    background-color: red;
+    font-family: sans-serif;
+    font-style: italic;
+    font-size: 45px;
+    text-align: right;
+}
+/*
+    所有p元系有 class=centos的生效
+*/
+p.centos{
+    background-color: aqua;
+    font-size: 2em;
+}
