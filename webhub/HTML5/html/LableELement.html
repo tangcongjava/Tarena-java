@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>html5新增的表单新元素lable</title>
+</head>
+<body>
+<p>这个lable用什么作用呢：<br/>
+    1.将某一label与某一表单控件进行关联。
+    2.形成lable与控件的联系，然后就可以通过lable的control属性找到与之关联的control控件。
+
+</p>
+<script>
+    function setValue(){
+        var label = document.getElementById("mylable");
+        var textbox = label.control;
+        textbox.value="001241";
+        var mysmall = document.getElementById("mysmall");
+        mysmall.text="";
+    }
+</script>
+<form>
+    <label id="mylable">
+       邮编：
+        <input type="text" maxlength="6"/>
+        <small id="mysmall">请输入6位邮编</small>
+    </label>
+    <input type="button" value="设置默认值" onclick="setValue()">
+</form>
+</body>
+</html>
