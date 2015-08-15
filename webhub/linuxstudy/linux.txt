@@ -1,0 +1,33 @@
+shell编程
+1.条件测试：
+   a:文件测试
+    1.测试是否是文件：
+     test -f <finename.txt>
+     echo $?
+    2.测试是否是目录：
+    test -d <dirname>
+     echo $?
+    3.测试是否具有可执行
+    test -x <filename.txt>
+    echo $?
+    b:测试字符
+    相等：＝
+    $EDITOR=vi
+    [ "$EDITOR" = "vi" ]
+    不相等：！＝
+    [ "$EDITOR" != "vi" ]
+    非空：-n
+    [ -n "$EDITOR" ]
+    空字符串：-z
+    [ -z "$EDITOR" ]
+    数字的比较：
+    大于 -gt
+    等于 -eq
+    不等于 －ne
+    小于   -lt
+    小于等于 -le；
+    大于等于 -ge
+    逻辑运算：
+    -a 且
+    -o 或
+    [ -w result.txt -a -w source.txt ]
