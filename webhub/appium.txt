@@ -1,0 +1,39 @@
+﻿--------------------------------appium自动化测试
+appium设计的三个原则：
+1.你无需为了自动化，而重新编译或者修改你的应用。
+2.你不必局限于某种语言或者框架来写和运行测试脚本。
+3.一个移动自动化的框架不应该在接口上重复造轮子。（移动自动化的接口应该统一）
+4.无论是精神上，还是名义上，都必须开源。
+
+满足第一点：
+appium的引擎是个第三方的测试框架。第三方框架有：
+ios uiautomation  ，4.1版本下使用selendroid
+android uiautomation
+
+满足第二点：
+appium把这些第三方框架封装成一套API，webdriver api，（web driver 也就是selenium webdriver）.WebDriver API指定了客户端到服务端
+的协议。
+appium概念：
+1.c/s概念：
+    appium的核心是一个web服务器，它提供了一套REST接口。它收到客户端的连接，监听到命立，接着在移动设备上执行这些命立，然后
+    将执行结果放在http响应中返还给客户端。
+2.session
+自动化始终围绕一个session进行，客户端初始化一个seesion（会话）来与服务端交互，不同的语言有不同的实现方式，但是他们最终都是发送为一个POST请求给服务端，请求中包含一个JSON对象，被称作“desired capabilities”。此时，服务端就会开启一个自动化的 session，然后返回一个 session ID，session ID将会被用户发送后续的命令。
+3.Desired Capabilities
+Desired capabilities 是一些键值对的集合 (比如，一个 map 或者 hash），客户端将这些键值对发给服务端，告诉服务端我们想要怎么测试。比如，我们可以把platformName capability 设置为 iOS，告诉 Appium 服务端，我们想要一个iOS 的 session，而不是一个 Android 的。我们也可以设置 safariAllowPopups capability 为 true，确保在 Safari 自动化 session 中，我们可以使用 javascript 来打开新窗口。参见 capabilities 文档，查看完整的 capabilities 列表。
+
+4.Appium Server<br/>
+Appium server 是用 Node.js 写的。我们可以用源码编译或者从 NPM 直接安装。
+   方式一：安装appium需要先安装node.js。如果通过node.js的npm安装则打开node.js然后输入rpm install appium -g-----不过这种方式太慢了。
+   方式二：https://bitbucket.org/appium/appium.app/downloads/
+   方式三：http://pan.baidu.com/s/1jGvAISu
+   
+
+appium测试环境部署：
+一：一：配置Android开发环境
+  1.安装java解释器，设置JAVA环境变量。
+  2.安装sdk。
+ 	    http://dl.google.com/android/android-sdk_r23.0.2-windows.zip
+ 	    解压SDK后，通过manager来进行升级，需要配置一个代理。这个代理在http://www.androiddevtools.cn/网上找一个。（到时找不到
+ 	    就看一下 cnblog中的虫师的博客）
+

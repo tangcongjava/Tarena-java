@@ -1,0 +1,386 @@
+----------------------------unittest
+python 版的junit
+unittest的几个方面：
+test fixture:
+    setup teardwon.
+test case: ----TestCase
+     单元的最小单位，就是测试用例。
+     in unittest testcase are represented by instance of TestCase
+     An instance of a TestCase-derived class is an object that can completely run a single test method, together with optional set-up and tidy-up code
+test suite:-----TestSuite
+     测试用例集。
+     suite = unittest.TestLoder().loadTestFromTestCase(testcass)
+     一个suit可以添加到另一个suit中。
+     suite1 = module1.TheTestSuite()
+suite2 = module2.TheTestSuite()
+alltests = unittest.TestSuite([suite1, suite2])
+test runner:
+     向用户提供测试结果以及处理测试用例的执行顺序。
+unittest也是以test开头来做为测试用例的。其实以test开始是为简化测试用例的执行过程。一般测试用例的执行过程是要先创建一个TestCase类，
+然后再重写runTest,这样麻烦费时，为了简化就直接用test前缀来做为测试用例。
+
+
+
+-----------------------------------------------robot framework------
+1.robot framework是通用的自动化测试框架。
+2.具有表格测试数据语法以及采用关键字驱动的测试方法。
+----安装robot framework
+1.pip install robotframework
+2.官司方的demo要安装docutils
+robot framework中的测试用例：
+1.采用tabular syntax来创建测试用例。
+   *** Test Cases ***
+User can create an account and log in
+    Create Valid User    fred    P4ssw0rd
+    Attempt to Login with Credentials    fred    P4ssw0rd
+    Status Should Be    Logged In
+
+User cannot log in with bad password
+    Create Valid User    betty    P4ssw0rd
+    Attempt to Login with Credentials    betty    wrong
+    Status Should Be    Access Denied
+    用例分析：初看这个用例像是手工测试用例，但这就是robotframework的关键字驱动的方法（捕捉行动的本质）。
+    
+    robotframework测试用例的基本语法格式是：
+    keyword+paramers  keyword 和 paramers之间至少用两个空格来分开。
+2.上面那个是一般的测试用例，robotframework 支持更高级的测试用例，英文是higher-level tests.higher-level就是指只使用高级的
+关键字，而不使用参数。官方上说可以用这个来向非技术人员进行交流。
+   higher-level
+   *** Test Cases ***
+User can change password
+    Given a user has a valid account
+    When she changes her password
+    Then she can log in with the new password
+    And she cannot use the old password anymore
+
+3.robotframework还支持数据驱动。data-driven test 数据驱动是为了满足输入参数和参出参数不同，其实测试过程一样的场景。
+  robotframework中让一个测试用例变成一个数据驱动的测试用例是用[template]模板。然后测试数据放在了代码中。
+  *** Test Cases ***
+Invalid password
+    [Template]    Creating user with invalid password should fail
+    abCD5            ${PWD INVALID LENGTH}
+    abCD567890123    ${PWD INVALID LENGTH}
+    123DEFG          ${PWD INVALID CONTENT}
+    abcd56789        ${PWD INVALID CONTENT}
+    AbCdEfGh         ${PWD INVALID CONTENT}
+    abCD56+          ${PWD INVALID CONTENT}
+    除了为每一个测试用例添加一个template，也可以将template写在一个配置文件中。做到一次编写，多次使用。
+即然robotframework中的关键字有着这么重要的作用，那么这个关键字哪至哪里呢？
+1.libary keyword.来自库文件中的关键字。
+2.user keyword.使用表格语法创建的关键字。
+------libary keyword
+所有最低级的测试用例的关键字都来自测试库中。这些测试库是用标准的语言实现的，如python，java。robotframework中的测试库包括：
+1.标准的测试库。2.额外的测试库。3.自定义库。
+1.standard libraires 包括一些通用的库如：operating system screenshort
+2.external libraires 比如selenium2libary.需要额外安装。
+Q:如何使用libary中的关键字？
+A:将libary导入。
+*** Settings ***
+Library           OperatingSystem
+Library           lib/LoginLibrary.py
+------user keywords
+robotframwork中一个最有力的一个特性就是简单的从己有的关键字创建更高级的关键字
+*** Keywords ***
+Clear login database
+    Remove file    ${DATABASE FILE}
+
+Create valid user
+    [Arguments]    ${username}    ${password}
+    Create user    ${username}    ${password}
+    Status should be    SUCCESS
+
+Creating user with invalid password should fail
+    [Arguments]    ${password}    ${error}
+    Create user    example    ${password}
+    Status should be    Creating user failed: ${error}
+
+Login
+    [Arguments]    ${username}    ${password}
+    Attempt to login with credentials    ${username}    ${password}
+    Status should be    Logged In
+
+# Keywords below used by higher level tests. Notice how given/when/then/and
+# prefixes can be dropped. And this is a comment.
+
+A user has a valid account
+    Create valid user    ${USERNAME}    ${PASSWORD}
+
+She changes her password
+    Change password    ${USERNAME}    ${PASSWORD}    ${NEW PASSWORD}
+    Status should be    SUCCESS
+
+She can log in with the new password
+    Login    ${USERNAME}    ${NEW PASSWORD}
+
+She cannot use the old password anymore
+    Attempt to login with credentials    ${USERNAME}    ${PASSWORD}
+    Status should be    Access Denied
+
+user-defined keywords可以包含return语句，也能包含loop语句。
+  user-defined keywords可以让测试用例创造者为一些常用的动作编写可复用的步骤。
+  ---------------------------robot framwork 之 variable.
+  robotframework中的变量的定义：
+  ${varialbeName}
+  i.e:
+  *** Variables ***
+${USERNAME}               janedoe
+${PASSWORD}               J4n3D0e
+${NEW PASSWORD}           e0D3n4J
+${DATABASE FILE}          ${TEMPDIR}${/}robotframework-quickstart-db.txt
+${PWD INVALID LENGTH}     Password must be 7-12 characters long
+${PWD INVALID CONTENT}    Password must be a combination of lowercase and uppercase letters and numbers
+  
+  使用variable:
+  1.变量最常用的使用场景就是作为关键字后面的参数。
+  2.返回值可以赋值给变量。
+  *** Test Cases ***
+User status is stored in database
+    [Tags]    variables    database
+    Create Valid User    ${USERNAME}    ${PASSWORD}
+    Database Should Contain    ${USERNAME}    ${PASSWORD}    Inactive
+    Login    ${USERNAME}    ${PASSWORD}
+    Database Should Contain    ${USERNAME}    ${PASSWORD}    Active
+
+*** Keywords ***
+Database Should Contain
+    [Arguments]    ${username}    ${password}    ${status}
+    ${database} =     Get File    ${DATABASE FILE}
+    Should Contain    ${database}    ${username}\t${password}\t${status}\n
+    
+------------------组织测试用例
+1.将测试用例放在一个文件中就是一个测试套件。
+2.可以对测试用例进行分层处理。就是以文件夹进行处理。
+------------------robot framework中的setup teardown
+1.如果想要某一个关键字在一个测试用例前后执行，那么就用test setup,test teardown.
+2.如果想要某一个关键字在一个测试套件前后执行，那么就用suite setup,suit teardown. 这两个都是写在setting table中。
+3.如果想要让某一个测试用例前后执行一个关键字，那么就用[setup] [teardown]
+
+
+----------------------------------robot framework之编写测试用例。
+1.robotframwork测试用例可以采用html文件。
+--------docutils--------
+接口测试的wiki地址：
+http://wiki.chofn.net/wiki/%E4%B8%93%E5%88%A9%E7%B3%BB%E7%BB%9F%E6%8E%A5%E5%8F%A3%E6%B5%8B%E8%AF%95
+
+
+1.专利系统消息发送与响应全部以json进行消息格式传递，且消息由header,body组成。
+2.文件的上传是用Multipart/form-data .这个协议支持向服务器发送二进制数据。
+   form表单的enctype共有二个值可选。enctype管理表单的MIME编码。
+    ①application/x-www-form-urlencoded(默认值)
+ ②multipart/form-data
+   这个传输时，消息体中还要用到分割线。这个bondary是浏览器自动生成的。
+cookies是服务器返回的，用于验证身份。以后的访问都要带上这个cookies的。
+1.apache monitor 与apache服务的关系。
+  am其实就是一个工具来进行windows的服务进行管理，在管理之前要生成一个apache服务。httpd -k install.安装服务。
+http://my.oschina.net/u/2429887/blog/544499?p={{currentPage+1}}
+httplib可以发送get和post请求。
+
+python json
+编码：把一个python对象编码转换成json字符串。json.dumps()
+转变规则是：
+dict ----object
+list,tuple---object
+str,unicode---object
+int,long,float --object
+True--------------true
+False-------------false
+None-------------null
+解码：把json格式字符串解码成python对象。json.load()
+数据类型的转换和上相同。
+
+接口测试中用到load方法就可以了。
+新建合同中的客户信息的选择，可以采用数据库的读取。
+流程可以配置。
+文件上传接口。
+文件的上传是post /file/upload中的。
+
+
+
+--------------urllib模块。
+urlopen返回对象提供方法：
+
+-         read() , readline() ,readlines() , fileno() , close() ：这些方法的使用方式与文件对象完全一样
+
+-         info()：返回一个httplib.HTTPMessage对象，表示远程服务器返回的头信息
+
+-         getcode()：返回Http状态码。如果是http请求，200请求成功完成;404网址未找到
+
+-         geturl()：返回请求的url
+
+ 
+使用urllib2可以设置debug模式。
+poster 提供了一组 Python 类和函数用来处理使用标准 multipart/form-data 编码的 HTTP POST 请求，也就是 HTTP 文件上传请求。
+----------------------------------------Python DDT
+multiply test cases
+python有一个支持数据驱动的测试库：DDT。
+还有一个github项目：
+https://github.com/wolever/nose-parameterized  这个也可以支持，不过这个好像不支持文件存储测试用例。
+
+-------------------------python readmine----
+1.python-redmine模块有一个资源的概念。
+资源通用的方法有：
+新建
+	create 直接上传到readmine  create new resource with given fields and save it to the Redmine
+	new     要通过save方法上传到readmine  Creates new empty resource but doesn’t save it to the Redmine
+读取资源：
+  get(resourcename)  Returns requested Resource object either by integer id or by string identifier:
+      dir()返回一个list，list元素的内容为资源的属性。
+      list()  返回一个List,元素为资源名与值
+      如果通过get(resourcename)方法不能获取所有资源属性可以加一个refesh()方法。
+  all  Returns a ResourceSet object that contains all the requested Resource objects
+  filter  Returns a ResourceSet object that contains Resource objects filtered by some condition(s)
+    all filter返回一个ResourceSet，ResourceSet object支持 limit offset.
+    redmine.project.all()[:135]  # Returns only the first 135 projects
+redmine.project.all(limit=135)  # Returns only the first 135 projects
+redmine.issue.filter(project_id='vacation')[10:3]  # Returns only 3 issues starting from 10th
+redmine.issue.filter(project_id='vacation', offset=10, limit=3)  # Returns only 3 issues starting from 10th
+ResoureSet这里有很多内容
+
+更新资源：
+  Update:Updates a resource with given fields and saves it to the Redmine.
+保存
+   Saves the current state of a resource to the Redmine.
+
+python-redmine中的资源：
+1.project。redmine中的项目。
+2.tracker redmine中的跟踪项如：bug,需求，项目变更
+3.versions  redmine中的项目版本号
+4.issue_categories  缺陷的类别
+5.issue bug
+6.user     redmine中的用户，查看用户的信息要用管理员。user.id,user.firstname,user.lastname
+如果在新建bug时，看到bug属性的字段没有见过，那就是自定义的字段。
+
+
+
+
+
+
+-------------------------nosetest------------------
+if a function is not in a class ,it is a function.if it is in a class it is a method
+nose测试用例的命名规则：
+Name my test modules/files starting with ‘test_’.
+Name my test functions starting with ‘test_’.
+Name my test classes starting with ‘Test’.
+Name my test methods starting with ‘test_’.
+Make sure all packages with test code have an ‘init.py’ file.
+
+nose还可以执行用unitest编写的测试用例。
+1.nosetests auto find testcase and run
+2.nosetests 里面的测试用例 
+    ((?:^|[\\b_\\.-])[Tt]est  函数或类名匹配这个正则就行。
+3.测试用例分几个级别：
+  package   setup teardown
+  module    setup teardown
+  function   setup teardown
+  模块级别的setup和teardown:
+    需要在模块的测试代码前后添加正确名的setup和teardown;
+  类级别的setup，teardown:
+     在类方法前后添加，并加上@classmethod.
+  方法：直接加上@with_setup
+  
+4.nosetests 中 generators：相当于数据驱动，也就是一个函数。这个函数里面使用了yield 关键字。generator必须yield一个tuple。且tuple的格式是
+第一个数据为可调用的函数，剩余的数据为函数的参数。
+  	def test_evens():
+    for i in range(0, 5):
+        yield check_even, i, i*3
+
+def check_even(n, nn):
+    assert n % 2 == 0 or nn % 2 == 0
+    generators中setup,teardown中会执行一次，如果要让生成的每个函数都执行setup,teardown则把setup,teardown函数放在测试函数内。
+    
+    
+如何将nose执行语句添加到测试脚本中进行测试？
+1.将命立行参数写入一个list中,list的格式是['foo','-s','-v','testfile']
+2.然后在于执行脚本中调用nose.run(argv=nosearg)
+
+1.使用nose进行测试时要让loggin输出日志需要加上 --nologcapture选项。
+--------------邮件--------------
+通过smtp发送邮件时，邮件的主题不能相同，要不然在接收邮件的时候是同一条，你会误以为没有收到邮件。
+1.email模块用来构建邮件。
+2.pytho 邮件发送步骤：
+   1.构建一个smtp.
+   2.login
+   3.通过email构建一个邮件。
+邮件的构成：
+标题，发信人，收件人，邮件内容，附件。
+
+
+------测试用例管理系统-----
+trac后续考虚把测试用例用这个管理起来。或者直接用testlink。
+
+
+-----------------------------------------------------CRM调用---------------------------------
+csd_customers 客户表
+csd_staff   员工表（包括顾问）。
+
+查询某一个顾问下面的客户
+select a.*, b.username from csd_customers a left join csd_staff b
+on a.sid = b.id
+where LOWER(b.username) = 'elva'
+
+bailorIndex-------查询委托人信息。
+contactIndex-------查询联系人信息。
+proposerIndex------查询申请人信息。
+getInventorList-----获取发明人信息
+
+
+	
+发明人（委托人）表：csd_inventor
+联系人：csd_customers_contacts
+申请人：存在于商标系统中的“adm_contract_proposer”表中 
+----------------------------------------------如何通过URL查找到后台服务器对应的逻辑处理函数
+patentsystem\App\Module  逻辑层
+
+C:\Users\Administrator\Desktop\patentsystem\trunk\patentsystem\App\Action  控制器
+
+根据URI 找到 控制器 名字，方法名
+
+----------------------------------------------接口测试的其它任务----------------
+1.整理前端与后台接口测试的数据传输内容。这是一个很大的工作量。
+2.编写测试用例的步骤：
+    针对每一个流程的分支编写一个类进行管理，每一个类中的方法就是流程处理节点。
+    组织前端传递的数据------通过http.post发送数据----编辑期望值。
+    组织前端数：
+         1.通过fiddler抓取前端数据的模板。
+         2.再根据具体的场景进行数据的更换。
+    具后该做参数的做参数化。
+3.修饰器的作用很大：
+    1.装修器接收一个函数参数，然后body是重新定义一个函数，然后返回一个新的函数
+    2.@ 标识符修饰了某一个函数后，返回的新的函数名与原来一致。
+4.目前己经打通了市场模块的所有注流程的接口。现在要处理的任务是：
+   1.随机选择客户。
+   2.对接口进行参数化。
+   3.输出测试报告。
+
+-----------------------------------------------通过接口测试了解到的业务知识
+1.通过专利数据库中的“ps_flow”表可以查看到己经定义的流程。具体流程有：
+    1.合同流程。
+    2.交底审核流程。
+    3.立案审核流程。
+    4.付款流程。
+    5.撤案流程。
+    6.外观立案流程。------------------用于专门处理外观立案流程
+    7.答复意见审核流程。--------------专利答复意见审核流程
+2.那查看某一流程含有什么节点查表：
+   ps_flow_node表中可以查看流程中包含的节点
+   http://patent.test.chofn.net/Flow/flowNodeAndHandlerDetail/------系统就是通过这个接口来查询某一个流程的下个节点对应的人应该是谁。
+   这个接口返回下一个流程节点是什么以及下一个流程节点的处理人列表。
+3.那下一流程节点的处理人列表是怎么查出来的呢？
+   ps_flow_node  表中有一个存储用户组的字段(groupid)。通过这个组ID就能找到对应的组，然后就能找到对应组下的人。
+
+4.交底审核和合同新建是两条线，就算是在新建合同时不提交交底书也行，可以在提案之前搞定
+
+5.接口测试如何定位错误：
+   用管理员帐号登录页面，查看error文件，找到对应的错误信息。如果显示sql错误那么就在sql文件中查询对应的错误。
+   insert into ps_contract_detail
+   
+6.获取交底书ID
+   访问	/Contract/detail   ----访问/contract/itemDetail/(这个返回结果里面有交底书id)
+   
+deccy  通过这个帐号登录商标系统进行充值，然后可以在市场系统进行充值。
+
+https://ddt.readthedocs.io/en/latest/api.html
+
+------------------------------------------selenium2.x
+利用浏览器原生的API封装成一套面向对象的Selenium webdriver api。由于是浏览器原生的API，所以不同的浏览器就会不同的API driver
+WebDriver Wire协议是通用的，也就是说不管是FirefoxDriver还是ChromeDriver，启动之后都会在某一个端口启动基于这套协议的Web Service。例如FirefoxDriver初始化成功之后，默认会从http://localhost:7055开始，而ChromeDriver则大概是http://localhost:46350之类的。接下来，我们调用WebDriver的任何API，都需要借助一个ComandExecutor发送一个命令，实际上是一个HTTP request给监听端口上的Web Service。在我们的HTTP request的body中，会以WebDriver Wire协议规定的JSON格式的字符串来告诉Selenium我们希望浏览器接下来做社么事情
